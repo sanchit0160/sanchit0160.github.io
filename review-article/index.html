@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Production link reviewer written in JS and php.">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/cn.png">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900" rel='stylesheet' type='text/css'>
+    <title>Review | Production Link</title>
+    <!-- Vendor styles - DO not use latest bootstrap.css-->
+    <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css"/>
+</head>
+
+<!-- Body-->
+<body class="back-row-toggle splat-toggle">
+    <section class="content">
+        <div class="col-md-12">
+            <h10 id="time" style="text-align: left; font-size: 0.5em;"></h10>
+            <div class="panel panel-filled">
+                <div class="panel-body">
+                    <br>
+                    <center>
+                        <textarea maxlength="14500000000000" id="list" placeholder="" class="form-control" style="resize: none;outline: none; width: 80%;height:150px;"></textarea>
+                        <br>
+                        <button type="button" id="start_test" onclick="submit()" class="btn btn-outline-primary">Start</button>&nbsp;
+                        <button type="button" onclick="stop()" id="stop_test" class="btn btn-outline-dark">Stop</button>
+                        <br><br>
+                        <small>
+                            <span class="bagde badge-pill badge-light"><strong>STATUS</strong></span>
+                            &nbsp;REVIEWED&nbsp;<span id="revid" class="badge badge-primary">0</span>
+                            &nbsp;LOADED&nbsp;<span id="loaded" class="badge badge-dark">0</span>
+                        </small>
+                    </center>
+                    <br>
+                </div>
+                <button type="button" id="showdec" onclick="changed_state('display_div');" class="btn btn-primary">Reviewed&nbsp;<span id="revid2">0</span></button>
+                <div id="display_div" style="display:block;"><span id=".approved" class="approved"></span></div>
+            </div>
+        </div>
+    </section>
+</body>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+<script src="script/script.js"></script>
+
+<style>
+    ::-webkit-input-placeholder {
+        text-align: center;
+    }
+    :-moz-placeholder {
+        text-align: center;
+    }
+    ::-moz-placeholder {
+        text-align: center;
+    }
+    :-ms-input-placeholder {
+        text-align: center;
+    }
+    ::-webkit-scrollbar {
+        width: 2px;
+        height: 2px;
+        background-color: #3a3c46;
+    }
+    ::-webkit-scrollbar-track {
+        border-radius: 30px;
+        -webkit-box-shadow: inset 0 0 6px #3b3c46;
+        background-color: #3b3c46;
+    }
+    ::-webkit-scrollbar-thumb {
+        border-radius: 30px;
+        background-color: #949ba2;
+    }
+</style>
+
+</html>
