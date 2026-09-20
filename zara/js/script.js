@@ -146,7 +146,7 @@
       hp: 100, maxHp: 100,
       iFrames: 0, blinkTimer: 0,
       shootCooldown: 0, shootDelay: 24,
-      recoil: 0, legPhase: 0, facing: 1
+      recoil: 0, legPhase: 0, facing: 1, isShielding: false
     };
 
     const boss = {
@@ -374,14 +374,14 @@
     // 6. START GAME
     // ============================================================
     function startGame() {
-      player.x = 300; player.y = GAME_H - 250;
+      player.x = 300; player.y = (GAME_H - player.h) / 2;
       player.vx = 0; player.vy = 0;
       player.hp = player.maxHp;
       player.iFrames = 0; player.blinkTimer = 0;
       player.shootCooldown = 0; player.recoil = 0;
-      player.legPhase = 0; player.facing = 1;
+      player.legPhase = 0; player.facing = 1; player.isShielding = false;
 
-      boss.x = 850; boss.y = GAME_H - 350;
+      boss.x = 850; boss.y = (GAME_H - boss.h) / 2;
       boss.hp = boss.maxHp;
       boss.enraged = false;
       boss.shootTimer = 0; boss.squash = 0;
@@ -392,7 +392,7 @@
 
       // Reset input
       touchDir.up = touchDir.down = touchDir.left = touchDir.right = false;
-      firePressed = false;
+      firePressed = false; shieldPressed = false;
 
       setState(STATE.PLAYING);
       initAudio();
@@ -414,6 +414,7 @@
       if (k === 'a' || e.key === 'ArrowLeft') { keys.a = true; keys.left = true; }
       if (k === 'd' || e.key === 'ArrowRight') { keys.d = true; keys.right = true; }
       if (k === ' ') { keys.space = true; e.preventDefault(); }
+      if (k === 'shift') { keys.shift = true; }
       if (k === 'escape' && currentState === STATE.PLAYING) {
         document.getElementById('btnQuit').click();
       }
@@ -425,6 +426,7 @@
       if (k === 'a' || e.key === 'ArrowLeft') { keys.a = false; keys.left = false; }
       if (k === 'd' || e.key === 'ArrowRight') { keys.d = false; keys.right = false; }
       if (k === ' ') { keys.space = false; e.preventDefault(); }
+      if (k === 'shift') { keys.shift = false; }
     });
 
     // ============================================================
@@ -463,6 +465,20 @@
     fireBtn.addEventListener('pointerup', fireEnd);
     fireBtn.addEventListener('pointercancel', fireEnd);
     fireBtn.addEventListener('pointerout', fireEnd);
+
+    let shieldPressed = false;
+    const shieldBtn = document.getElementById('shieldBtn');
+    const setShield = (val) => {
+      shieldPressed = val;
+      if (val) shieldBtn.classList.add('pressed'); else shieldBtn.classList.remove('pressed');
+    };
+    const shieldStart = (e) => { e.preventDefault(); e.stopPropagation(); setShield(true); };
+    const shieldEnd = (e) => { e.preventDefault(); e.stopPropagation(); setShield(false); };
+
+    shieldBtn.addEventListener('pointerdown', shieldStart);
+    shieldBtn.addEventListener('pointerup', shieldEnd);
+    shieldBtn.addEventListener('pointercancel', shieldEnd);
+    shieldBtn.addEventListener('pointerout', shieldEnd);
 
     // ============================================================
     // 10. INPUT — SWIPE + TAP ON CANVAS
@@ -606,11 +622,14 @@
       if (keys.a || keys.left || touchDir.left) mx -= 1;
       if (keys.d || keys.right || touchDir.right) mx += 1;
 
+      player.isShielding = keys.shift || shieldPressed;
+
       if (mx || my) {
         const len = Math.hypot(mx, my);
         mx /= len; my /= len;
-        player.vx = mx * player.speed;
-        player.vy = my * player.speed;
+        const curSpeed = player.isShielding ? player.speed * 0.5 : player.speed;
+        player.vx = mx * curSpeed;
+        player.vy = my * curSpeed;
         player.legPhase += 0.25;
       } else {
         player.vx *= 0.7; player.vy *= 0.7;
@@ -632,12 +651,16 @@
       if (player.recoil > 0) player.recoil *= 0.85;
 
       // Shooting
-      if ((keys.space || firePressed) && player.shootCooldown <= 0) {
-        const sx = player.x + player.w/2 + player.facing * 40;
-        const sy = player.y + 40;
+      if (!player.isShielding && (keys.space || firePressed) && player.shootCooldown <= 0) {
+        const ang = Math.atan2(
+          (boss.y + boss.h/2) - (player.y + 40),
+          (boss.x + boss.w/2) - (player.x + player.w/2)
+        );
+        const sx = player.x + player.w/2 + Math.cos(ang) * 40;
+        const sy = player.y + 40 + Math.sin(ang) * 40;
         projectiles.push({
-          x: sx, y: sy, vx: player.facing * 13, vy: 0,
-          w: 18, h: 8, life: 300
+          x: sx, y: sy, vx: Math.cos(ang) * 13, vy: Math.sin(ang) * 13,
+          w: 18, h: 8, life: 300, ang: ang
         });
         player.shootCooldown = player.shootDelay;
         player.recoil = 1.0;
@@ -726,7 +749,16 @@
         const eRect = { x: e.x - e.r, y: e.y - e.r, w: e.r*2, h: e.r*2 };
         if (rectCollide(pRect, eRect)) {
           enemyProjectiles.splice(i, 1);
-          if (player.iFrames <= 0) {
+          if (player.isShielding) {
+            spawnParticles(e.x, e.y, 8, C.note1, 3, [1, 4]);
+            particles.push({
+              x: player.x + player.w/2, y: player.y - 20,
+              vx: (Math.random() - 0.5) * 1.5, vy: -1.5,
+              life: 1.5,
+              color: '#ffffff',
+              text: 'khikhi!'
+            });
+          } else if (player.iFrames <= 0) {
             player.hp -= 15;
             player.iFrames = 55;
             player.blinkTimer = 0;
@@ -746,7 +778,8 @@
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.x += p.vx; p.y += p.vy;
-        p.vy += 0.1;
+        if (!p.text) p.vy += 0.1;
+        else p.vy *= 0.9;
         p.life -= 0.022;
         if (p.life <= 0) particles.splice(i, 1);
       }
@@ -874,33 +907,74 @@
       ctx.roundRect(-35, 30, 16, 40, 7);
       ctx.fill();
 
+      const aimAng = Math.atan2(
+        (boss.y + boss.h/2) - (player.y + 40),
+        (boss.x + boss.w/2) - (player.x + player.w/2)
+      );
+
       // Book
-      ctx.fillStyle = C.playerBook;
-      ctx.beginPath();
-      ctx.roundRect(-56, 24, 44, 58, 3);
-      ctx.fill();
-      ctx.fillStyle = '#e8dfd0';
-      ctx.beginPath();
-      ctx.roundRect(-52, 28, 38, 50, 2);
-      ctx.fill();
-      ctx.fillStyle = C.playerBook;
-      ctx.beginPath();
-      ctx.roundRect(-54, 26, 42, 54, 3);
-      ctx.fill();
-      ctx.strokeStyle = C.playerBookLt;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(-54, 26); ctx.lineTo(-54, 80);
-      ctx.stroke();
-      ctx.fillStyle = C.playerBookLt;
-      ctx.font = 'bold 6.5px "Inter", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('CAN WE', -33, 44);
-      ctx.fillText('BE', -33, 53);
-      ctx.fillText('STRANGERS', -33, 62);
-      ctx.fillText('AGAIN', -33, 71);
+      if (player.isShielding) {
+        ctx.save();
+        ctx.translate(Math.cos(aimAng) * 45, Math.sin(aimAng) * 45); // move it in front of her face towards the aim
+        ctx.rotate(aimAng + Math.PI/2);
+        ctx.fillStyle = C.playerBook;
+        ctx.beginPath();
+        ctx.roundRect(-22, -29, 44, 58, 3);
+        ctx.fill();
+        ctx.fillStyle = '#e8dfd0';
+        ctx.beginPath();
+        ctx.roundRect(-18, -25, 38, 50, 2);
+        ctx.fill();
+        ctx.fillStyle = C.playerBook;
+        ctx.beginPath();
+        ctx.roundRect(-20, -27, 42, 54, 3);
+        ctx.fill();
+        ctx.strokeStyle = C.playerBookLt;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-20, -27); ctx.lineTo(-20, 27);
+        ctx.stroke();
+        ctx.fillStyle = C.playerBookLt;
+        ctx.font = 'bold 6.5px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CAN WE', 1, -9);
+        ctx.fillText('BE', 1, 0);
+        ctx.fillText('STRANGERS', 1, 9);
+        ctx.fillText('AGAIN', 1, 18);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = C.playerBook;
+        ctx.beginPath();
+        ctx.roundRect(-56, 24, 44, 58, 3);
+        ctx.fill();
+        ctx.fillStyle = '#e8dfd0';
+        ctx.beginPath();
+        ctx.roundRect(-52, 28, 38, 50, 2);
+        ctx.fill();
+        ctx.fillStyle = C.playerBook;
+        ctx.beginPath();
+        ctx.roundRect(-54, 26, 42, 54, 3);
+        ctx.fill();
+        ctx.strokeStyle = C.playerBookLt;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-54, 26); ctx.lineTo(-54, 80);
+        ctx.stroke();
+        ctx.fillStyle = C.playerBookLt;
+        ctx.font = 'bold 6.5px "Inter", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CAN WE', -33, 44);
+        ctx.fillText('BE', -33, 53);
+        ctx.fillText('STRANGERS', -33, 62);
+        ctx.fillText('AGAIN', -33, 71);
+      }
 
       // Right arm
+      ctx.save();
+      ctx.translate(26, 38);
+      ctx.rotate(aimAng);
+      ctx.translate(-26, -38);
+
       ctx.fillStyle = C.playerSkin;
       ctx.beginPath();
       ctx.roundRect(18, 28, 16, 40, 7);
@@ -919,6 +993,8 @@
       ctx.beginPath();
       ctx.arc(58, 41, 3, 0, Math.PI*2);
       ctx.fill();
+      
+      ctx.restore();
 
       // Head
       ctx.fillStyle = C.playerSkin;
@@ -1175,21 +1251,30 @@
 
     function drawProjectiles() {
       projectiles.forEach(p => {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        if (p.ang !== undefined) ctx.rotate(p.ang);
+
         ctx.strokeStyle = C.projTrail;
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(p.x - p.vx * 2, p.y);
-        ctx.lineTo(p.x, p.y);
+        const speed = Math.hypot(p.vx, p.vy);
+        ctx.moveTo(-speed * 2, 0);
+        ctx.lineTo(0, 0);
         ctx.stroke();
+
         ctx.fillStyle = C.projCore;
         ctx.beginPath();
-        ctx.roundRect(p.x - p.w/2, p.y - p.h/2, p.w, p.h, 3);
+        ctx.roundRect(-p.w/2, -p.h/2, p.w, p.h, 3);
         ctx.fill();
+
         ctx.fillStyle = '#fff8e0';
         ctx.beginPath();
-        ctx.roundRect(p.x - p.w/4, p.y - p.h/4, p.w/2, p.h/2, 2);
+        ctx.roundRect(-p.w/4, -p.h/4, p.w/2, p.h/2, 2);
         ctx.fill();
+
+        ctx.restore();
       });
 
       enemyProjectiles.forEach(e => {
@@ -1221,9 +1306,15 @@
       particles.forEach(p => {
         ctx.globalAlpha = Math.max(0, p.life);
         ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
-        ctx.fill();
+        if (p.text) {
+          ctx.font = 'bold 16px "Inter", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(p.text, p.x, p.y);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2);
+          ctx.fill();
+        }
       });
       ctx.globalAlpha = 1;
     }
