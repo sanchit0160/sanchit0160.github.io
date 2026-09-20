@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#12110e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Zara's Weekday Escape</title>
+  <link rel="stylesheet" href="css/style.css">
+
+</head>
+<body>
+<div id="game-container">
+  <div id="canvas-wrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ========== MAIN MENU ========== -->
+    <div id="mainMenu" class="overlay active">
+      <div class="game-title">
+        <span class="title-small">A Quiet Tuesday Off</span>
+        Zara's Weekday Escape
+      </div>
+      <div class="subtitle">The Titan Momo Monster Arrives</div>
+      <div class="lore-card">
+        <p>
+          <span class="highlight">Tuesday, 6:47 AM.</span> Zara, 20, is deep in her physical copy of
+          <em>"Can We Be Strangers Again"</em>. Her day off is sacred — no digital reminders,
+          just sticky notes on the corkboard. But a giant, greasy
+          <span class="danger-text">Titan Momo Monster</span> crashes in, splattering dumpling juice everywhere.
+          Help Zara blast it with her Schezwan Blaster. Win, and Hakka Noodles + Veg Manchurian
+          are delivered. Lose, and her book is ruined.
+        </p>
+      </div>
+      <div class="button-group">
+        <button class="btn" id="btnPlay">Play</button>
+        <button class="btn ghost" id="btnHow">How to Play</button>
+      </div>
+    </div>
+
+    <!-- ========== RULES / HOW TO PLAY ========== -->
+    <div id="rulesScreen" class="overlay">
+      <div class="screen-title">How to Play</div>
+      <div class="rules-panel">
+        <div class="rule-item">
+          <div class="rule-num">01</div>
+          <div class="rule-content">
+            <div class="rule-title">Move</div>
+            <div class="rule-text">
+              <strong>Desktop:</strong> <span class="key">WASD</span> or <span class="key">ARROWS</span>.<br>
+              <strong>Mobile:</strong> Use the <strong>D-Pad</strong>, or simply <strong>swipe</strong> anywhere on the screen.
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">02</div>
+          <div class="rule-content">
+            <div class="rule-title">Attack</div>
+            <div class="rule-text">
+              <strong>Desktop:</strong> <span class="key">SPACE</span> to fire the Schezwan Blaster.<br>
+              <strong>Mobile:</strong> Tap the <span class="key">FIRE</span> button, or <strong>tap</strong> the screen.
+              Each shot has a strict cooldown.
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">03</div>
+          <div class="rule-content">
+            <div class="rule-title">Defense</div>
+            <div class="rule-text">
+              Dodge the flying greasy momos. Taking a hit grants a brief
+              <strong>invincibility window</strong> — Zara blinks and cannot be damaged.
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">04</div>
+          <div class="rule-content">
+            <div class="rule-title">The Boss</div>
+            <div class="rule-text">
+              The Titan Momo Monster becomes <strong>Enraged</strong> at <strong>40% health</strong> —
+              attacking faster and shooting more projectiles.
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-num">05</div>
+          <div class="rule-content">
+            <div class="rule-title">Win &amp; Lose</div>
+            <div class="rule-text">
+              Defeat the monster to enjoy Indian Chinese food. Lose, and your book gets ruined
+              by greasy dumpling juice. You can <strong>Quit</strong> anytime during play using the
+              button at the top-right of the game screen.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="button-group" style="margin-top: 1.2em;">
+        <button class="btn ghost" id="btnBackFromRules">Back</button>
+      </div>
+    </div>
+
+    <!-- ========== VICTORY SCREEN ========== -->
+    <div id="victoryScreen" class="overlay">
+      <div class="end-content">
+        <div class="end-mark">— ✦ —</div>
+        <div class="screen-title">Victory</div>
+        <div class="end-message">Hakka Noodles &amp; Veg Manchurian arrive.</div>
+        <div class="end-lore">
+          Zara's book is safe. The Titan Momo Monster is reduced to a quiet puddle of sauce.
+          She smiles, and adds a new sticky note to the corkboard:
+          <em>"Ordered Indian Chinese. Best Tuesday ever."</em>
+        </div>
+        <div class="button-group">
+          <button class="btn" id="btnVictoryAgain">Play Again</button>
+          <button class="btn ghost" id="btnVictoryMenu">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== GAME OVER SCREEN ========== -->
+    <div id="gameOverScreen" class="overlay">
+      <div class="end-content">
+        <div class="end-mark">— ✕ —</div>
+        <div class="screen-title">Game Over</div>
+        <div class="end-message">Your book is ruined by greasy dumpling juice.</div>
+        <div class="end-lore">
+          The Momo Monster splattered all over <em>"Can We Be Strangers Again"</em>.
+          Zara sighs, and writes a new sticky note:
+          <em>"Buy a new book. Avoid momos forever."</em>
+        </div>
+        <div class="button-group">
+          <button class="btn" id="btnGameOverAgain">Try Again</button>
+          <button class="btn ghost" id="btnGameOverMenu">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== IN-GAME HUD (Quit Button) ========== -->
+    <div id="gameHUD">
+      <button id="btnQuit" aria-label="Quit Game">
+        <span class="quit-x">✕</span>
+        <span>Quit</span>
+      </button>
+    </div>
+
+    <!-- ========== SWIPE HINT ========== -->
+    <div id="swipeHint">Swipe to move · Tap to shoot</div>
+
+    <!-- ========== TOUCH CONTROLS ========== -->
+    <div id="touchControls">
+      <div class="dpad">
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" data-dir="up">▲</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" data-dir="left">◀</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" data-dir="right">▶</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" data-dir="down">▼</div>
+        <div class="dpad-btn empty"></div>
+      </div>
+      <div class="fire-btn" id="fireBtn">
+        ✦
+        <span class="fire-label">Fire</span>
+      </div>
+    </div>
+
+    <!-- ========== CONFIRM QUIT DIALOG ========== -->
+    <div id="confirmDialog">
+      <div class="confirm-box">
+        <div class="confirm-title">Quit to Main Menu?</div>
+        <div class="confirm-text">Your current progress will be lost.</div>
+        <div class="confirm-actions">
+          <button class="btn" id="btnConfirmQuit">Quit</button>
+          <button class="btn ghost" id="btnCancelQuit">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+
+</body>
+</html>
