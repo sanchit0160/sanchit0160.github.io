@@ -683,11 +683,13 @@
     }
 
     /* Desktop — hide touch controls unless touch device */
+    /*
     @media (hover: hover) and (pointer: fine) and (min-width: 901px) {
       #touchControls {
         opacity: 0;
         visibility: hidden;
       }
     }
+    */
 
     .hidden { display: none !important; }

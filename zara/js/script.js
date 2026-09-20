@@ -826,6 +826,7 @@
       ];
       notes.forEach((n, idx) => {
         ctx.save();
+        ctx.globalAlpha = 0.5;
         ctx.translate(n.x, n.y);
         ctx.rotate((idx % 2 === 0 ? 1 : -1) * 0.03);
         ctx.fillStyle = 'rgba(0,0,0,0.35)';
